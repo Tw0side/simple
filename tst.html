@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance Means Nothing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Fredoka:wght@400;500&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom Animations and Styles */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); /* Lavender Gradient */
+            overflow: hidden; 
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .font-hand {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .font-cute {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* --- STAGE 1: THE JOURNEY --- */
+        #journey-stage {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .zone {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Sender: Bottom Left */
+        .zone-sender {
+            bottom: 10%;
+            left: 10%;
+        }
+
+        /* Receiver: Top Right */
+        .zone-receiver {
+            top: 10%;
+            right: 10%;
+        }
+
+        /* The Paper Rocket */
+        #paper-rocket {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            bottom: 15%; /* Start near sender */
+            left: 12%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .fly-animation {
+            animation: flyAcross 2.5s ease-in-out forwards;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) rotate(0deg) scale(0.5);
+            }
+            10% {
+                transform: translate(20px, -40px) rotate(45deg) scale(1);
+            }
+            50% {
+                transform: translate(40vw, -40vh) rotate(55deg) scale(1.1);
+            }
+            90% {
+                opacity: 1;
+                transform: translate(75vw, -70vh) rotate(45deg) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(80vw, -75vh) rotate(45deg) scale(0.5);
+            }
+        }
+
+        /* Dotted Line Path (Visual decoration) */
+        .path-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .path-svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.5);
+            stroke-width: 3;
+            stroke-dasharray: 10, 10;
+        }
+
+        /* Small Envelope Icon */
+        .small-envelope {
+            width: 50px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .small-envelope:hover { transform: scale(1.1); }
+        .small-envelope.sent { opacity: 0; transform: scale(0); transition: 0.5s; }
+        .small-envelope.received { 
+            animation: landEnvelope 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+
+        @keyframes landEnvelope {
+            0% { transform: scale(0) translateY(-20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* --- STAGE 2: THE CARD (Overlay) --- */
+        #card-stage {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            background: rgba(243, 229, 245, 0.95); /* Semi-transparent lavender */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none; /* Click through when hidden */
+            transition: opacity 0.8s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        #card-stage.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Reuse previous envelope styles */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .envelope-wrapper:hover { transform: scale(1.02); }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #9575cd;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 110px solid #b39ddb;
+            transform-origin: top;
+            transition: transform 0.6s ease-in-out, z-index 0.6s ease-in-out;
+            z-index: 20;
+        }
+
+        .envelope.open .flap { transform: rotateX(180deg); z-index: 1; }
+
+        .pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 100px solid #9575cd;
+            z-index: 30;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .letter {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 270px;
+            height: 380px; 
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.6s 0.4s ease-in-out; 
+            z-index: 5;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-origin: bottom;
+            transform: translateY(0); 
+        }
+
+        .envelope.open .letter { transform: translateY(-200px); z-index: 40; }
+
+        .polaroid {
+            background: white;
+            padding: 8px 8px 25px 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transform: rotate(-3deg);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        .polaroid-img {
+            width: 100%;
+            height: 140px;
+            background-color: #ede7f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        /* Clouds */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: floatCloud 20s linear infinite;
+        }
+        @keyframes floatCloud { from { transform: translateX(100vw); } to { transform: translateX(-200px); } }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .zone-sender { bottom: 5%; left: 5%; }
+            .zone-receiver { top: 5%; right: 5%; }
+            @keyframes flyAcross {
+                0% { opacity: 1; transform: translate(0, 0) scale(0.5); }
+                100% { opacity: 0; transform: translate(80vw, -80vh) scale(0.5); }
+            }
+        }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- Background Elements -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="cloud w-32 h-12 top-10 left-10 delay-0"></div>
+        <div class="cloud w-40 h-16 top-40 left-1/2 delay-1000"></div>
+        <div class="cloud w-24 h-10 bottom-20 right-20 delay-2000"></div>
+    </div>
+
+    <!-- STAGE 1: JOURNEY SCENE -->
+    <div id="journey-stage">
+        
+        <!-- Path Visualization -->
+        <div class="path-line">
+            <svg class="path-svg">
+                 <!-- A curve from bottom left to top right -->
+                 <path d="M 50 600 Q 300 300 800 100" fill="none" /> 
+            </svg>
+        </div>
+
+        <!-- Flying Rocket (Initially Hidden) -->
+        <div id="paper-rocket">
+            <svg viewBox="0 0 24 24" fill="white" stroke="#7e57c2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12h20"/>
+                <path d="M13 2l9 10-9 10"/>
+                <path d="M22 12L2 22l5-10L2 2"/>
+            </svg>
+        </div>
+
+        <!-- Sender Zone (Bottom Left) -->
+        <div class="zone zone-sender group">
+            <div class="relative">
+                <!-- Cat 1 -->
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="60" r="30" fill="#b39ddb"/>
+                    <polygon points="30,40 40,55 20,55" fill="#b39ddb"/>
+                    <polygon points="70,40 60,55 80,55" fill="#b39ddb"/>
+                    <!-- Eyes -->
+                    <circle cx="40" cy="55" r="3" fill="#fff"/>
+                    <circle cx="60" cy="55" r="3" fill="#fff"/>
+                    <circle cx="40" cy="55" r="1" fill="#333"/>
+                    <circle cx="60" cy="55" r="1" fill="#333"/>
+                    <path d="M45 65 q5 5 10 0" stroke="#333" fill="none"/>
+                </svg>
+                <!-- Tooltip -->
+                <div class="absolute -top-12 left-0 bg-white px-3 py-1 rounded-full text-xs text-purple-600 font-cute shadow-sm whitespace-nowrap animate-bounce" id="send-hint">
+                    Send a wish!
+                </div>
+            </div>
+            
+            <!-- Send Button / Envelope -->
+            <div class="mt-2 text-center">
+                <div id="sender-envelope" class="small-envelope bg-white p-2 rounded shadow-md border border-purple-100 inline-block" onclick="launchRocket()">
+                    <svg viewBox="0 0 24 24" fill="#ff80ab" stroke="none">
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                </div>
+                <p class="text-purple-700 font-cute text-sm mt-2">Me</p>
+            </div>
+        </div>
+
+        <!-- Receiver Zone (Top Right) -->
+        <div class="zone zone-receiver">
+            <div class="relative">
+                <!-- Cat 2 (Waiting) -->
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="60" r="30" fill="#9575cd"/>
+                    <polygon points="30,40 40,55 20,55" fill="#9575cd"/>
+                    <polygon points="70,40 60,55 80,55" fill="#9575cd"/>
+                    <!-- Closed Eyes (Waiting) -->
+                    <path d="M35 55 q5 -2 10 0" stroke="#fff" fill="none" stroke-width="2"/>
+                    <path d="M55 55 q5 -2 10 0" stroke="#fff" fill="none" stroke-width="2"/>
+                    <path d="M45 65 q5 5 10 0" stroke="#fff" fill="none"/>
+                </svg>
+                 <!-- Waiting bubbles -->
+                <div class="absolute -top-10 right-0 text-xl animate-pulse" id="waiting-dots">💭</div>
+            </div>
+
+            <!-- Receiver Envelope (Initially Hidden) -->
+            <div class="mt-2 text-center h-12"> <!-- Fixed height to prevent jump -->
+                <div id="receiver-envelope" class="small-envelope bg-white p-2 rounded shadow-md border border-purple-100 hidden" onclick="openFullCard()">
+                    <svg viewBox="0 0 24 24" fill="#ff4081" stroke="none"> <!-- Different color heart -->
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                </div>
+                <p class="text-purple-700 font-cute text-sm mt-2">You</p>
+            </div>
+        </div>
+
+        <!-- Distance Text -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none opacity-50">
+            <p class="font-hand text-3xl text-purple-400">Miles Apart</p>
+            <div class="w-32 h-0.5 bg-purple-200 mx-auto my-2 rounded-full"></div>
+            <p class="font-hand text-3xl text-purple-400">Heart Connected</p>
+        </div>
+    </div>
+
+    <!-- STAGE 2: CARD OVERLAY -->
+    <div id="card-stage">
+        <div class="text-center">
+            <!-- Back Button -->
+            <button onclick="closeFullCard()" class="mb-4 text-purple-500 font-cute text-sm hover:underline">
+                &larr; Back to Sky
+            </button>
+
+            <div class="envelope-wrapper" onclick="openEnvelope()" id="main-envelope">
+                <div class="envelope" id="envelope">
+                    <div class="flap"></div>
+                    <div class="pocket"></div>
+                    
+                    <!-- The Letter Content -->
+                    <div class="letter text-center">
+                        <!-- Cute decoration/Photo placeholder -->
+                        <div class="polaroid w-32 mx-auto border border-gray-100">
+                            <div class="polaroid-img">
+                                <!-- SVG Illustration of two cats reunited -->
+                                <svg width="90" height="90" viewBox="0 0 100 100" fill="none">
+                                     <path d="M40 70 Q 50 90 60 70" stroke="#7E57C2" stroke-width="3" fill="none"/> <!-- Tail Heart -->
+                                     <circle cx="40" cy="50" r="20" fill="#B39DDB"/>
+                                     <circle cx="60" cy="50" r="20" fill="#9575CD"/>
+                                     <path d="M50 30 L48 28 C46 26 44 26 44 28 C44 30 50 34 50 34 C50 34 56 30 56 28 C56 26 54 26 52 28 L50 30" fill="#FF80AB"/>
+                                </svg>
+                            </div>
+                            <div class="text-xs font-hand text-gray-500 mt-1">Us Soon 💜</div>
+                        </div>
+
+                        <!-- Text Message -->
+                        <div class="mt-2 space-y-1 px-1">
+                            <h2 class="font-hand text-2xl text-purple-600">Happy New Year!</h2>
+                            <p class="font-cute text-sm text-gray-600 leading-tight">
+                                Even though we are apart tonight, my heart is right there with you.
+                            </p>
+                            <p class="font-cute text-xs text-gray-500 leading-tight pt-2">
+                                Sending you a paper rocket filled with all my love for 2026.
+                            </p>
+                            <p class="font-hand text-lg text-purple-500 mt-3">Miss You! 🐱</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-8 text-white font-cute animate-pulse" id="tap-hint">Tap to Open</p>
+        </div>
+        <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none"></canvas>
+    </div>
+
+    <script>
+        let rocketLaunched = false;
+
+        function launchRocket() {
+            if (rocketLaunched) return;
+            rocketLaunched = true;
+
+            const rocket = document.getElementById('paper-rocket');
+            const senderEnv = document.getElementById('sender-envelope');
+            const receiverEnv = document.getElementById('receiver-envelope');
+            const sendHint = document.getElementById('send-hint');
+            const waitingDots = document.getElementById('waiting-dots');
+
+            // 1. Hide sender envelope & hint
+            senderEnv.classList.add('sent');
+            sendHint.style.display = 'none';
+
+            // 2. Animate Rocket
+            // Reset rocket position just in case
+            rocket.style.opacity = '1';
+            rocket.classList.add('fly-animation');
+
+            // 3. Create particles along path (Simple implementation)
+            let particleInterval = setInterval(() => {
+                createParticle();
+            }, 100);
+
+            // 4. On Arrival (approx 2.4s)
+            setTimeout(() => {
+                clearInterval(particleInterval);
+                waitingDots.style.display = 'none'; // Cat wakes up
+                
+                // Show receiver envelope
+                receiverEnv.classList.remove('hidden');
+                receiverEnv.classList.add('received');
+
+                // Add "New Message" text
+                const msg = document.createElement('div');
+                msg.innerText = "1 New Message!";
+                msg.className = "absolute -top-12 -right-4 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-cute animate-bounce shadow-lg";
+                receiverEnv.parentElement.appendChild(msg);
+
+            }, 2300);
+        }
+
+        // Particle effect for rocket trail
+        function createParticle() {
+            const rocket = document.getElementById('paper-rocket');
+            const rect = rocket.getBoundingClientRect();
+            
+            // Only create if rocket is visible on screen
+            if(rect.x > window.innerWidth || rect.y < 0) return;
+
+            const p = document.createElement('div');
+            p.innerHTML = '❤';
+            p.style.position = 'fixed';
+            p.style.left = (rect.left + 10) + 'px';
+            p.style.top = (rect.top + 10) + 'px';
+            p.style.fontSize = '10px';
+            p.style.color = '#ff80ab';
+            p.style.pointerEvents = 'none';
+            p.style.zIndex = '40';
+            p.style.transition = 'all 1s ease-out';
+            document.body.appendChild(p);
+
+            // Animate fade out
+            setTimeout(() => {
+                p.style.transform = 'translate(-10px, 10px) scale(0)';
+                p.style.opacity = '0';
+            }, 50);
+
+            setTimeout(() => {
+                p.remove();
+            }, 1000);
+        }
+
+        function openFullCard() {
+            const stage = document.getElementById('card-stage');
+            stage.classList.add('active');
+        }
+
+        function closeFullCard() {
+            const stage = document.getElementById('card-stage');
+            stage.classList.remove('active');
+            // Reset envelope state if closed
+            resetEnvelope();
+        }
+
+        /* --- Reuse Envelope Logic --- */
+        let isEnvOpen = false;
+        function openEnvelope() {
+            if (isEnvOpen) return;
+            isEnvOpen = true;
+
+            const envelope = document.getElementById('envelope');
+            const tapHint = document.getElementById('tap-hint');
+
+            envelope.classList.add('open');
+            tapHint.style.display = 'none';
+
+            setTimeout(() => {
+                fireConfetti();
+            }, 600);
+        }
+
+        function resetEnvelope() {
+            isEnvOpen = false;
+            const envelope = document.getElementById('envelope');
+            const tapHint = document.getElementById('tap-hint');
+            envelope.classList.remove('open');
+            tapHint.style.display = 'block';
+        }
+
+        /* --- Confetti --- */
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#9575cd', '#b39ddb', '#ce93d8', '#f3e5f5', '#ffffff'];
+
+            for (let i = 0; i < 80; i++) {
+                pieces.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2 + 50, 
+                    w: Math.random() * 8 + 4,
+                    h: Math.random() * 8 + 4,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 1) * 15 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10,
+                    gravity: 0.2,
+                    opacity: 1
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activePieces = 0;
+
+                pieces.forEach(p => {
+                    if (p.opacity <= 0) return;
+                    activePieces++;
+                    p.x += p.vx; p.y += p.vy; p.vy += p.gravity;
+                    p.rotation += p.rotationSpeed; p.opacity -= 0.008;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                    ctx.restore();
+                });
+
+                if (activePieces > 0) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+        
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            if(canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+    </script>
+</body>
+</html>
